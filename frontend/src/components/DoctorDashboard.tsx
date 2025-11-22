@@ -6,10 +6,8 @@ import PatientsList from './PatientsList';
 import DoctorSettings from './DoctorSettings';
 import FileNotificationBell from './FileNotificationBell';
 import FilePreviewModal from './FilePreviewModal';
+import { API_URL, SOCKET_URL } from '../config';
 import './DoctorDashboard.css';
-
-const API_URL = 'http://localhost:3000/api';
-const SOCKET_URL = 'http://localhost:3000';
 
 interface DoctorDashboardProps {
   user: {

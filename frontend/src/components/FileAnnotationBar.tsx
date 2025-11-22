@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 import './FileAnnotationBar.css';
 
 interface FileAnnotationBarProps {
@@ -25,8 +26,6 @@ const FileAnnotationBar: React.FC<FileAnnotationBarProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [annotationCount, setAnnotationCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
-
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
   // Load annotation count
   useEffect(() => {

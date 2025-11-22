@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import axios from 'axios';
+import { API_URL } from '../config';
 import './FileNotificationBell.css';
 
 interface FileNotification {
@@ -43,8 +44,6 @@ const FileNotificationBell: React.FC<FileNotificationBellProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLButtonElement>(null);
-
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
   // Load initial notifications
   useEffect(() => {

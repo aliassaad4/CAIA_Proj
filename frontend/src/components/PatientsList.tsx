@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 import './PatientsList.css';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
 interface User {
   id: string;

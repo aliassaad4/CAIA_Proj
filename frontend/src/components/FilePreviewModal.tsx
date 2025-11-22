@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 import './FilePreviewModal.css';
 
 interface FilePreviewModalProps {
@@ -73,8 +74,6 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
   // Mark as read state
   const [isMarkedAsRead, setIsMarkedAsRead] = useState(initialReadStatus);
   const [isMarkingAsRead, setIsMarkingAsRead] = useState(false);
-
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
   // Load file preview
   useEffect(() => {

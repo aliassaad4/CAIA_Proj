@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 import './VisitRecorder.css';
-
-const API_URL = 'http://localhost:3000/api';
 
 interface VisitRecorderProps {
   visitId: string;

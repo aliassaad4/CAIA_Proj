@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Chat from './Chat';
+import { API_URL } from '../config';
 import './Dashboard.css';
-
-const API_URL = 'http://localhost:3000/api';
 
 interface DashboardProps {
   user: {

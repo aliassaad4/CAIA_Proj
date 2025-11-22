@@ -4,9 +4,8 @@ import axios from 'axios';
 import Toast from './Toast';
 import FileUploadEnhanced from './FileUploadEnhanced';
 import FilePreviewModal from './FilePreviewModal';
+import { API_URL, SOCKET_URL } from '../config';
 import './Chat.css';
-
-const API_URL = 'http://localhost:3000/api';
 
 interface Message {
   id: string;
@@ -167,7 +166,7 @@ const Chat: React.FC<ChatProps> = ({ user, onAppointmentBooked, rescheduleAppoin
 
   useEffect(() => {
     // Connect to WebSocket
-    const newSocket = io('http://localhost:3000', {
+    const newSocket = io(SOCKET_URL, {
       auth: {
         token: user.token,
       },

@@ -36,22 +36,38 @@ export const prisma = new PrismaClient();
 const app: Express = express();
 const server = http.createServer(app);
 
+// CORS configuration - support multiple origins for dev and production
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:3001',
+  'http://localhost:3000',
+].filter(Boolean) as string[];
+
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed) || origin.includes('render.com') || origin.includes('onrender.com'))) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(null, true); // Allow all in production for now - tighten later
+    }
+  },
+  credentials: true,
+};
+
 // Initialize Socket.IO
 export const io = new SocketServer(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
-    credentials: true,
-  },
+  cors: corsOptions,
 });
 
 // Attach Socket.IO instance to Express app for use in controllers
 app.set('io', io);
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
-  credentials: true,
-}));
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

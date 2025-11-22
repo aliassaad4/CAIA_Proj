@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 import './FileUploadEnhanced.css';
 
 interface FileUploadEnhancedProps {
@@ -30,8 +31,6 @@ const FileUploadEnhanced: React.FC<FileUploadEnhancedProps> = ({
   const [category, setCategory] = useState(categoryFilter);
   const [description, setDescription] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
   const ALLOWED_TYPES = {
     PDF: 'application/pdf',
