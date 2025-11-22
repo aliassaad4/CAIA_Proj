@@ -375,23 +375,52 @@ async function checkAvailability(
     const providerId = provider.id;
 
     // Check for conflicts with existing appointments in database
+    // We need to find any appointment where:
+    // - The existing appointment starts before our appointment ends AND
+    // - The existing appointment ends after our appointment starts
     const conflictingAppointments = await prisma.visit.findMany({
       where: {
         providerId,
         status: {
           in: ['SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS'],
         },
-        scheduledAt: {
-          gte: new Date(appointmentTime.getTime() - durationMinutes * 60000),
-          lte: new Date(appointmentTime.getTime() + durationMinutes * 60000),
-        },
+        // Check for overlapping time ranges
+        AND: [
+          {
+            // Existing appointment starts before our requested end time
+            scheduledAt: {
+              lt: appointmentEnd,
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        scheduledAt: true,
+        durationMinutes: true,
       },
     });
 
-    if (conflictingAppointments.length > 0) {
+    // Now check if any of these appointments actually overlap with the requested time
+    const actualConflicts = conflictingAppointments.filter((apt) => {
+      const existingStart = new Date(apt.scheduledAt);
+      const existingEnd = new Date(existingStart.getTime() + (apt.durationMinutes || 30) * 60000);
+
+      // Overlap occurs if: existing starts before we end AND existing ends after we start
+      return existingStart < appointmentEnd && existingEnd > appointmentTime;
+    });
+
+    if (actualConflicts.length > 0) {
+      const conflict = actualConflicts[0];
+      const conflictTime = new Date(conflict.scheduledAt).toLocaleString('en-US', {
+        timeZone: 'Asia/Beirut',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
       return {
         available: false,
-        conflictReason: `Already have an appointment at ${appointmentTime.toLocaleString('en-US', { timeZone: 'Asia/Beirut' })} Beirut time`,
+        conflictReason: `Already have an appointment at ${conflictTime} Beirut time`,
       };
     }
 
@@ -503,22 +532,45 @@ async function bookAppointmentForPatient(
   const appointmentEnd = new Date(scheduledAt.getTime() + durationMinutes * 60000);
 
   // Check for conflicts with existing appointments in database
+  // We need to find any appointment where time ranges overlap
   const conflictingAppointments = await prisma.visit.findMany({
     where: {
       providerId,
       status: {
         in: ['SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS'],
       },
+      // Get appointments that start before our end time
       scheduledAt: {
-        gte: new Date(scheduledAt.getTime() - durationMinutes * 60000),
-        lte: new Date(scheduledAt.getTime() + durationMinutes * 60000),
+        lt: appointmentEnd,
       },
+    },
+    select: {
+      id: true,
+      scheduledAt: true,
+      durationMinutes: true,
     },
   });
 
-  if (conflictingAppointments.length > 0) {
+  // Filter to find actual overlapping appointments
+  const actualConflicts = conflictingAppointments.filter((apt) => {
+    const existingStart = new Date(apt.scheduledAt);
+    const existingEnd = new Date(existingStart.getTime() + (apt.durationMinutes || 30) * 60000);
+    // Overlap occurs if: existing starts before we end AND existing ends after we start
+    return existingStart < appointmentEnd && existingEnd > scheduledAt;
+  });
+
+  if (actualConflicts.length > 0) {
+    const conflict = actualConflicts[0];
+    const conflictTime = new Date(conflict.scheduledAt).toLocaleString('en-US', {
+      timeZone: 'Asia/Beirut',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      month: 'short',
+      day: 'numeric'
+    });
     throw new Error(
-      `Time slot not available. There is already an appointment scheduled at ${scheduledAt.toLocaleString()}. Please choose a different time.`
+      `Time slot not available. There is already an appointment scheduled at ${conflictTime}. Please choose a different time.`
     );
   }
 
@@ -661,6 +713,7 @@ async function rescheduleAppointmentForPatient(
   }
 
   const durationMinutes = existingAppointment.durationMinutes || 30;
+  const appointmentEnd = new Date(scheduledAt.getTime() + durationMinutes * 60000);
 
   // Check for conflicts with other appointments (excluding this one)
   const conflictingAppointments = await prisma.visit.findMany({
@@ -670,16 +723,38 @@ async function rescheduleAppointmentForPatient(
       status: {
         in: ['SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS'],
       },
+      // Get appointments that start before our end time
       scheduledAt: {
-        gte: new Date(scheduledAt.getTime() - durationMinutes * 60000),
-        lte: new Date(scheduledAt.getTime() + durationMinutes * 60000),
+        lt: appointmentEnd,
       },
+    },
+    select: {
+      id: true,
+      scheduledAt: true,
+      durationMinutes: true,
     },
   });
 
-  if (conflictingAppointments.length > 0) {
+  // Filter to find actual overlapping appointments
+  const actualConflicts = conflictingAppointments.filter((apt) => {
+    const existingStart = new Date(apt.scheduledAt);
+    const existingEnd = new Date(existingStart.getTime() + (apt.durationMinutes || 30) * 60000);
+    // Overlap occurs if: existing starts before we end AND existing ends after we start
+    return existingStart < appointmentEnd && existingEnd > scheduledAt;
+  });
+
+  if (actualConflicts.length > 0) {
+    const conflict = actualConflicts[0];
+    const conflictTime = new Date(conflict.scheduledAt).toLocaleString('en-US', {
+      timeZone: 'Asia/Beirut',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      month: 'short',
+      day: 'numeric'
+    });
     throw new Error(
-      `Time slot not available. There is already an appointment scheduled at ${scheduledAt.toLocaleString()}. Please choose a different time.`
+      `Time slot not available. There is already an appointment scheduled at ${conflictTime}. Please choose a different time.`
     );
   }
 
